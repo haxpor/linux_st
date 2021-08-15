@@ -26,7 +26,7 @@ if [ "$1" == "build" ]; then
         exit 1
     fi
 
-    g++ -g -fno-exceptions -std=c++11 \
+    g++ -g -fno-exceptions -std=c++17 -Wall -Wextra -pedantic \
         $2 \
         $3  # if there's any additional optional compilation flags, put in quote is adviced
 

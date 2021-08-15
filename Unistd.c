@@ -8,16 +8,17 @@
 // 'gcc -Wno-write-strings ...'.
 #pragma GCC diagnostic ignored "-Wwrite-strings"
 
-#include <iostream>
+#include <stdio.h>
 #include <unistd.h>
 
 int main()
 {
     // getpid()
-    std::cout << "PID of this program is " << getpid() << std::endl;
+	// pid_t is type-defed to int
+    printf("PID of this program is %u\n", getpid());
 
     // execv()
-    char* const args[] = {"-la", (char* const)nullptr};
+    char* const args[] = {"-la", (char* const)NULL};
     execv("ls", args);
     return 0;
 }
