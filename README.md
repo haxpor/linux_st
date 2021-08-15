@@ -1,9 +1,12 @@
-# Build
+# How to Build
 
-## Simple case
+* `make` or `make all` - build all source files
+* `make <source-file-without-extension>` - build individual source file
+* `make clean` - clean all built artifacts
 
-Source code inside `src_indiv/` are for a single main source file that can be compiled with `make_indiv.sh`. Users just define a new source file name in `DEMOSOR`.
+for other dedicated testing program, for now go to such directory, then `make`.
 
-## More complex case
+# License
 
-More complex testing program lives in its own separate directory.
+MIT, Wasin Thonkaew
+
