@@ -1,10 +1,9 @@
 # How to Build
 
-* `make` or `make all` - build all source files
+* `make` or `make all` - build all source files either from individual source files, or source files living in separate directories
 * `make <source-file-without-extension>` - build individual source file
-* `make clean` - clean all built artifacts
-
-for other dedicated testing program, for now go to such directory, then `make`.
+* `make <dir-name>.dir` - build individual program living in `dir-name` e.g. `make execve.dir`
+* `make clean` - clean all built artifacts for from both individual source files, and source files living in separate directories
 
 # License
 
