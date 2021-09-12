@@ -14,6 +14,7 @@ TARGET_DEPS := unistd.out \
 	designated_initializers.out \
 	signal.out \
 	compile_time_type_checking.out \
+	program_invocation_name.out \
 	execve.dir                         # targets that live in separte dircectory suffixes with .dir
 
 all: $(TARGET_DEPS)
@@ -42,6 +43,9 @@ signal.out: signal.c
 	$(CC) $(COMMON_C_FLAGS) $^ -o $@
 
 compile_time_type_checking.out: compile_time_type_checking.c
+	$(CC) $(COMMON_C_FLAGS) $^ -o $@
+
+program_invocation_name.out: program_invocation_name.c
 	$(CC) $(COMMON_C_FLAGS) $^ -o $@
 
 # ---- target listing for program living in separate directory  should be listed here onwards ----
