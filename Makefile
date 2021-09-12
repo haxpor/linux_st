@@ -1,7 +1,7 @@
 .PHONY: all clean
 
 MK=make
-CC=gcc-10
+CC=gcc
 # closely align with standard version used by kernel
 # NOTE: on gcc 9+ onwards don't have gnu98 (which is main for compiling kernel code)
 COMMON_C_FLAGS=-std=gnu99 -Wall -Wextra -O2 -g
