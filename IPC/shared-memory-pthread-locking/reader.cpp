@@ -45,7 +45,7 @@ void signal_handler(int signal)
 	if (s_mmap != nullptr)
 		MMap stack_value2 = *s_mmap;
 
-	// force exit to avoid double destructor call as it will return back to normal flow within main()
+	// force exit to avoid double destructor call otherwise it will return back to normal flow within main()
 	std::exit(1);
 }
 
