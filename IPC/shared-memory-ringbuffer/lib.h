@@ -5,6 +5,7 @@
 #include <ostream>
 #include <cassert>
 #include <mutex>
+#include <type_traits>
 
 namespace lib
 {
@@ -19,23 +20,55 @@ struct ElementData
 		os << "ID: " << obj.id << ", Name: " << obj.name;
 		return os;
 	}
-};
+} __attribute__((aligned(64)));	// or use alignas(64) in front of ElementData
 
 struct RingBufferCtrlFields
 {
 	pthread_rwlock_t rwlock;
 	int head;
 	int tail;
-};
+} __attribute__((aligned(64)));
 
 const int sElementSize = 100;
 struct SharedData
 {
+	// segregate this section into a cacheline
 	pthread_rwlock_t rwlock;
 	bool operational;
-	ElementData elems[sElementSize];
+	char _padd1[64 - sizeof(pthread_rwlock_t) + sizeof(bool)];	// assume we are on 64-bit
+
+	// segregate into a cacheline implicitly by its own struct (exactly size as cacheline size)
 	RingBufferCtrlFields rb_ctrl_fields;
-};
+
+	// segreate into a cachline implicitly
+	ElementData elems[sElementSize];
+} __attribute__((aligned(64)));
+
+// this section will be hidden from visiblity
+namespace
+{
+	struct CheckElementDataAlignment
+	{
+		using BaseType = ElementData;
+		using Name = typename std::remove_all_extents<decltype(BaseType::name)>::type;
+		static constexpr bool is_name_aligned = (alignof(BaseType) == 64) && (alignof(Name) == 1);
+		static constexpr bool is_id_aligned = alignof(BaseType::id) == alignof(int);
+
+		static_assert(is_name_aligned, "ElementData::name must align on cacheline size(64 bytes) and its own natural size(1)");
+		static_assert(is_id_aligned, "ElementData::id must align on its natural size(4)");
+	};
+
+	struct CheckSharedDataAlignment
+	{
+		static constexpr bool is_struct_aligned = alignof(SharedData) == 64;
+		static constexpr bool is_rb_ctrl_fields_aligned = alignof(SharedData::rb_ctrl_fields) == 64;
+		static constexpr bool is_elems_aligned = alignof(SharedData::elems) == 64;
+
+		static_assert(is_struct_aligned, "SharedData must align on cacheline size(64)");
+		static_assert(is_rb_ctrl_fields_aligned, "SharedData::rb_ctrl_fields must align on cacheline size(64)");
+		static_assert(is_elems_aligned, "SharedData::elems must align on cacheline size(64)");
+	};
+}
 
 // RAII of pthread_rwlock_wrlock
 struct RWLock
