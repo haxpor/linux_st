@@ -10,7 +10,7 @@
 args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) < 2) {
-	stop("Not enough input arguments provided.\nRscript plotchart.R <input-file> <output-image-file>", call. = FALSE)
+	stop("Not enough input arguments provided.\nRscript plotchart.R <input-file> <output-image-file> <tag-text>", call. = FALSE)
 }
 
 data <- read.table(args[1], header=TRUE, sep=",")
@@ -25,7 +25,7 @@ median_value_display <- round(median_value, 2)
 png(args[2], width=1280, height=800)
 
 plot(data$Date, data$Latency,
-	 main="Time series of latency in grabbing a next item from ring buffer",
+	 main=paste("Time series of latency in getting next item - Process#", args[3], sep=""),
 	 xlab="Timestamp",
 	 ylab="Latency (micro)",
 	 type="l", col="blue", lwd=3)
