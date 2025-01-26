@@ -10,9 +10,6 @@
 namespace lib
 {
 
-// NOTE: byte-alignment won't make difference (even if apply where situation doesn't need it makes it worse) in case of no modification of the consuming data.
-// So there is no risk of false sharing. No cacheline boundary alignment allows CPU to read more data per one fetch thus less latency.
-// This is from benchmark.
 struct ElementData
 {
 	char name[255];
@@ -23,33 +20,30 @@ struct ElementData
 		os << "ID: " << obj.id << ", Name: " << obj.name;
 		return os;
 	}
-} __attribute__((aligned(64)));	// or use alignas(64) in front of ElementData
+};
 
 struct RingBufferCtrlFields
 {
-	pthread_rwlock_t rwlock;
-	int head;
-	int tail;
-} __attribute__((aligned(64)));
+	alignas(64) pthread_rwlock_t rwlock;
+	alignas(64) int head;
+	alignas(64) int tail;
+};
 
 const int sElementSize = 500;
 struct SharedData
 {
-	// segregate this section into a cacheline
-	pthread_rwlock_t rwlock;
-	bool operational;
-	char _padd1[64 - sizeof(pthread_rwlock_t) + sizeof(bool)];	// assume we are on 64-bit
+	alignas(64) pthread_rwlock_t rwlock;
+	alignas(64) bool operational;
 
-	// segregate into a cacheline implicitly by its own struct (exactly size as cacheline size)
 	RingBufferCtrlFields rb_ctrl_fields;
-
-	// segreate into a cachline implicitly
 	ElementData elems[sElementSize];
-} __attribute__((aligned(64)));
+};
 
 // this section will be hidden from visiblity
 namespace
 {
+
+#if 0
 	struct CheckElementDataAlignment
 	{
 		using BaseType = ElementData;
@@ -71,6 +65,7 @@ namespace
 		static_assert(is_rb_ctrl_fields_aligned, "SharedData::rb_ctrl_fields must align on cacheline size(64)");
 		static_assert(is_elems_aligned, "SharedData::elems must align on cacheline size(64)");
 	};
+#endif
 }
 
 // RAII of pthread_rwlock_wrlock
