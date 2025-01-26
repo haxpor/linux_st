@@ -25,7 +25,7 @@ median_value_display <- round(median_value, 2)
 png(args[2], width=1280, height=800)
 
 plot(data$Date, data$Latency,
-	 main="Time series of latency in cache access",
+	 main="Time series of latency in grabbing a next item from ring buffer",
 	 xlab="Timestamp",
 	 ylab="Latency (micro)",
 	 type="l", col="blue", lwd=3)
@@ -37,7 +37,7 @@ text(x=min(data$Date), y=avg_value,
 	 labels=paste("Average:", avg_value_display),
 	 pos=3, col="red")
 
-text(x=min(data$Date), y=median_value,
+text(x=max(data$Date), y=median_value,
 	 labels=paste("Median:", median_value_display),
 	 pos=3, col="purple")
 
