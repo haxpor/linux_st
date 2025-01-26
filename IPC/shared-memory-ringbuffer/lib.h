@@ -10,6 +10,9 @@
 namespace lib
 {
 
+// NOTE: byte-alignment won't make difference (even if apply where situation doesn't need it makes it worse) in case of no modification of the consuming data.
+// So there is no risk of false sharing. No cacheline boundary alignment allows CPU to read more data per one fetch thus less latency.
+// This is from benchmark.
 struct ElementData
 {
 	char name[255];
@@ -29,7 +32,7 @@ struct RingBufferCtrlFields
 	int tail;
 } __attribute__((aligned(64)));
 
-const int sElementSize = 100;
+const int sElementSize = 500;
 struct SharedData
 {
 	// segregate this section into a cacheline

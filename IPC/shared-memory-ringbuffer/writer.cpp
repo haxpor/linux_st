@@ -70,7 +70,7 @@ int main()
 	// random for ms to delay each iteration of writing into shared memory
 	std::random_device rd;
 	std::mt19937 gen(rd());
-	std::uniform_int_distribution<> dis(50, 100);
+	std::uniform_int_distribution<> dis(20, 40);
 
 	// recommended to use slash prefixed from manpage
 	const char* name = "/osimhen";

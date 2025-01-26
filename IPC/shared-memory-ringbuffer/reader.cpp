@@ -13,6 +13,11 @@
 #include <csignal>
 #include <random>
 #include <thread>
+#include <chrono>
+
+#ifdef BENCH_LATENCY
+#include <fstream>
+#endif
 
 #include "lib.h"
 #include "ringbuffer.h"
@@ -22,14 +27,21 @@ using namespace lib;
 ShmFdClient* s_shm_fd_obj = nullptr;
 MMap* s_mmap = nullptr;
 SharedData *s_ptr = nullptr;
-//bool s_is_unlock = false;	// require to not block writer process
+
+#ifdef BENCH_LATENCY
+std::ofstream *s_ts_output_file = nullptr;
+#endif
 
 // shared memory won't be unlinked automatically and it still exists on the machine if signal comes
 // so we handle them here.
 void signal_handler(int signal)
 {
-	//if (s_ptr != nullptr && !s_is_unlock)
-		//pthread_rwlock_unlock(&s_ptr->rwlock);
+#ifdef BENCH_LATENCY
+	// close the file if not yet
+	// this happens when signal caught after opening the file and we are not done yet
+	if (s_ts_output_file != nullptr && s_ts_output_file->is_open())
+		s_ts_output_file->close();
+#endif
 
 	// just make a copy
 	if (s_shm_fd_obj != nullptr)
@@ -42,7 +54,7 @@ void signal_handler(int signal)
 	std::exit(1);
 }
 
-int main()
+int main(int argc, char* argv[])
 {
 	std::signal(SIGINT, signal_handler);
 	std::signal(SIGTERM, signal_handler);
@@ -84,16 +96,58 @@ int main()
 
 	bool operational = true;
 	ElementData data;	// reuse holding data structure
+
+#ifdef BENCH_LATENCY
+	const char* ts_output_filename = "ts-input.txt";
+	if (argc > 1)
+		ts_output_filename = argv[1];
+
+	// ignore the current file content, open for writing and truncate them
+	std::ofstream ts_output_file(ts_output_filename, std::ios::out | std::ios::trunc);
+	if (!ts_output_file.is_open())
+	{
+		std::cerr << "Error opening file for output benchmark of cache latency access\n";
+		return 1;
+	}
+
+	s_ts_output_file = &ts_output_file;
+
+	// turn off buffering of file
+	ts_output_file.rdbuf()->pubsetbuf(nullptr, 0);
+	// output header column names
+	ts_output_file << "Timestamp,Latency\n" << std::flush;
+#endif
+
 	while (operational)
 	{
-		RWUniqueLock _opt_lock(&ptr->rwlock);
-		operational = ptr->operational;
-		_opt_lock.unlock();
+#ifdef BENCH_LATENCY
+		auto start = std::chrono::steady_clock::now();
+		bool res = rb.get(data);
+		auto end = std::chrono::steady_clock::now();
+		std::chrono::duration<double, std::micro> elapsed = end - start;
+		double elapsed_value = elapsed.count();
 
+		if (res)
+		{
+			std::cout << data << std::endl;
+
+			// current milli
+			auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(end.time_since_epoch()).count();
+			// output to the file for time series
+			ts_output_file << ms << "," << elapsed_value << "\n" << std::flush;
+		}
+		else
+			std::cerr << "not available data\n";
+#else
 		if (rb.get(data))
 			std::cout << data << std::endl;
 		else
 			std::cerr << "not available data\n";
+#endif
+
+		RWUniqueLock _opt_lock(&ptr->rwlock);
+		operational = ptr->operational;
+		_opt_lock.unlock();
 
 		// random delay time in ms
 		int delay_ms = dis(gen);
